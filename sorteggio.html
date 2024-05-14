@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interrogazione</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        background-color: #f2f2f2;
+      }
+      #container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      #title {
+        margin-top: 20px;
+        font-size: 36px;
+        font-weight: bold;
+        color: #333;
+      }
+      #question-box {
+        margin-top: 30px;
+        border: 2px solid #ccc;
+        background-color: #fff;
+        padding: 20px;
+        width: 60%;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+      }
+      #question {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+      }
+      #stars {
+        margin-top: 20px;
+        font-size: 24px;
+        color: #333;
+      }
+      .star {
+        cursor: pointer;
+        color: #ccc;
+        font-size: 36px;
+      }
+      .star:hover,
+      .star.checked {
+        color: #ffcc00;
+      }
+      #timer {
+        margin-top: 20px;
+        font-size: 18px;
+        color: #333;
+      }
+      #buttons {
+        margin-top: 30px;
+      }
+      button {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        margin-right: 10px;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <div id="title">Inizia ad interrogare</div>
+      <div id="question-box">
+        <div id="question">La domanda è...</div>
+        <div id="student">Lo studente è...</div>
+        <div id="stars">
+          <span class="star" onclick="setRating(1)">★</span>
+          <span class="star" onclick="setRating(2)">★</span>
+          <span class="star" onclick="setRating(3)">★</span>
+          <span class="star" onclick="setRating(4)">★</span>
+          <span class="star" onclick="setRating(5)">★</span>
+        </div>
+      </div>
+      <div id="timer">
+        Tempo rimanente: <span id="countdown">120</span> secondi
+      </div>
+      <div id="buttons">
+        <button onclick="prossimoStudente()">Prossimo studente</button>
+        <button onclick="saltaDomanda()">Salta domanda</button>
+        <button onclick="saltaStudente()">Salta studente</button>
+      </div>
+    </div>
+
+    <script>
+      let domande = [];
+      let studenti = [];
+      let randomIndex = 0;
+      let countdownInterval;
+
+      const ws = new WebSocket("ws://localhost:3000");
+
+      ws.onopen = function () {
+        console.log("WebSocket connection established.");
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const materiaSelezionata = urlParams.get("lastMateria");
+        const classeSelezionata = urlParams.get("classe");
+
+        if (materiaSelezionata && classeSelezionata) {
+          const materiaSelezionataMsg = {
+            type: "materia_selezionata",
+            materia: materiaSelezionata,
+          };
+          ws.send(JSON.stringify(materiaSelezionataMsg));
+
+          const classeSelezionataMsg = {
+            type: "classe_selezionata",
+            classe: classeSelezionata,
+          };
+          ws.send(JSON.stringify(classeSelezionataMsg));
+        } else {
+          console.error("Parametri mancanti nell'URL");
+        }
+      };
+
+      ws.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        console.log(data);
+
+        if (data.type === "domande") {
+          domande = data.domande;
+          visualizzaDomandaCasuale();
+        }
+
+        if (data.type === "studenti") {
+          studenti = data.studenti;
+          visualizzaStudenteCasuale();
+        }
+      };
+
+      function visualizzaDomandaCasuale() {
+        const randomIndex = Math.floor(Math.random() * domande.length);
+        const questionDiv = document.getElementById("question");
+        questionDiv.textContent = domande[randomIndex].Testo;
+      }
+
+      function visualizzaStudenteCasuale() {
+        randomIndex = Math.floor(Math.random() * studenti.length);
+        const studentDiv = document.getElementById("student");
+        studentDiv.textContent = `Lo studente è ${studenti[randomIndex].Nome} ${studenti[randomIndex].Cognome}`;
+      }
+
+      function prossimoStudente() {
+        saltaDomanda();
+        saltaStudente();
+        alert("Carica il prossimo studente.");
+        startTimer(120, countdownDisplay);
+      }
+
+      function saltaDomanda() {
+        visualizzaDomandaCasuale();
+        startTimer(120, countdownDisplay);
+      }
+
+      function saltaStudente() {
+        visualizzaStudenteCasuale();
+        startTimer(120, countdownDisplay);
+      }
+      function getCurrentDateForMySQL() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+      function setRating(rating) {
+        var stars = document.querySelectorAll(".star");
+        for (var i = 0; i < stars.length; i++) {
+          if (i < rating) {
+            stars[i].classList.add("checked");
+          } else {
+            stars[i].classList.remove("checked");
+          }
+        }
+        ws.send(
+          JSON.stringify({
+            type: "valutazione",
+            id: randomIndex,
+            voto: rating,
+            data: getCurrentDateForMySQL(),
+          })
+        );
+        prossimoStudente();
+      }
+      function startTimer(duration, display) {
+        let timer = duration;
+
+        // Cancella l'intervallo esistente, se presente
+        clearInterval(countdownInterval);
+
+        // Avvia un nuovo intervallo con il valore di 120 secondi
+        countdownInterval = setInterval(function () {
+          display.textContent = timer;
+          if (--timer < 0) {
+            clearInterval(countdownInterval);
+            alert("Tempo scaduto!");
+            saltaDomanda();
+            // Riparti il timer resettandolo a 120 secondi
+            startTimer(120, display);
+          }
+        }, 1000);
+      }
+
+      const countdownDisplay = document.getElementById("countdown");
+
+      // Avvia il timer quando la pagina è caricata
+      window.onload = function () {
+        startTimer(120, countdownDisplay, countdownInterval); // Passa countdownInterval come parametro
+      };
+    </script>
+  </body>
+</html>

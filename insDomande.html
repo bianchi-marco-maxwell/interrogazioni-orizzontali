@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inserimento Domanda</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+      }
+      form {
+        width: 50%;
+        margin: 0 auto;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+      }
+      input[type="text"],
+      select {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-sizing: border-box;
+      }
+      input[type="submit"] {
+        background-color: #4caf50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      input[type="submit"]:hover {
+        background-color: #45a049;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Inserimento Domanda</h2>
+    <form action="/insDomande" method="POST">
+      <label for="testo">Testo Domanda:</label>
+      <input type="text" id="testo" name="testo" required />
+
+      <label for="materia">Materia:</label>
+      <select id="materia" name="materia" required>
+        <option value="">Seleziona la Materia</option>
+        <option value="Matematica">Matematica</option>
+        <option value="Italiano">Italiano</option>
+        <option value="Storia">Storia</option>
+        <option value="GPOI">GPOI</option>
+        <option value="Informatica">Informatica</option>
+        <option value="Sistemi e Reti">Sistemi e Reti</option>
+        <option value="TPSIT">TPSIT</option>
+      </select>
+
+      <label for="macroargomento">Macroargomento:</label>
+      <input type="text" id="macroargomento" name="macroargomento" required />
+
+      <label for="tag">Tag (opzionale):</label>
+      <input type="text" id="tag" name="tag" />
+
+      <input type="submit" value="Inserisci Domanda" />
+      <script>
+        function validaForm() {
+          // Ottieni i valori dai campi del modulo
+          var testo = document.getElementById("testo").value;
+          var materia = document.getElementById("materia").value;
+          var macroargomento = document.getElementById("macroargomento").value;
+
+          // Controlla che i campi obbligatori siano compilati e non vuoti
+          if (
+            testo.trim() === "" ||
+            materia.trim() === "" ||
+            macroargomento.trim() === ""
+          ) {
+            alert("Si prega di compilare tutti i campi obbligatori.");
+            return false; // Impedisce l'invio del modulo se i campi obbligatori non sono compilati
+          }
+
+          // Se tutti i campi obbligatori sono compilati, mostra l'alert e consente l'invio del modulo
+          alert("Valori inseriti correttamente");
+          return true;
+        }
+      </script>
+    </form>
+  </body>
+</html>
